@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 	out.width = "90%"
 )
 
-theme_set(theme_minimal() +  theme(plot.title = element_text(hjust = 0.5))) 
+theme_set(theme_minimal() +  theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 # Problem1
@@ -37,7 +37,6 @@ replace_missing <- function(vector) {
                 replace_na(vector,"virginica")
         }
 }
-
 # apply my 'replace_missing' function
 iris_without_missing <-
         iris_with_missing %>% 
@@ -45,6 +44,42 @@ iris_without_missing <-
         bind_cols() %>% 
         janitor::clean_names() 
 ```
+
+
+# Problem2
+```{r create dataframe}
+study_df <- 
+        tibble(file_names = list.files("./data"),
+               path = str_c("./data/", file_names)) %>%
+        mutate(data = map(path, read_csv)
+        ) %>% 
+        unnest() %>% 
+        select(-path) %>% 
+        pivot_longer(
+                -file_names,
+                names_to = "week",
+                names_prefix = "week_",
+                values_to = "observations"
+                ) %>% 
+        mutate(file_names = str_remove(file_names,".csv"),
+               week = factor(week)) 
+```
+
+## spaghetti plot
+```{r}
+study_df %>% 
+        mutate(group = str_sub(file_names,1,3),
+               group = factor(group)) %>% 
+        ggplot(aes(x = week, y = observations, color = file_names)) +
+        geom_point(size = 1) +
+        geom_line(aes(group = file_names)) +
+        facet_grid(.~ group,labeller = as_labeller(c("con" =  "control", "exp" = "experiment"))) +
+        labs(title = "Observations on each subject over time") + 
+        theme(legend.position = "bottom")
+```
+
+comment on differences between groups.
+
 
 
 
