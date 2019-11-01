@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 	out.width = "90%"
 )
 
-theme_set(theme_minimal() +  theme(plot.title = element_text(hjust = 0.5)))
+theme_set(theme_minimal() +  theme(plot.title = element_text(hjust = 0.5)) + theme(legend.position = "bottom") + theme(legend.title = element_blank()) )
 ```
 
 # Problem1
@@ -81,5 +81,83 @@ study_df %>%
 comment on differences between groups.
 
 
+# Problem3
+```{r}
+lm_regression <- function(n = 30, beta0 = 2, beta1 = 0 ){
+        sim_df = tibble(
+                x = rnorm(n),
+                y = beta0 + beta1*x + rnorm(n,0,sqrt(50))
+                )
+        ls_fit = lm(y ~ x , data = sim_df)
+        
+        tibble(
+                beta1_hat = coef(ls_fit)[2],
+                p_value = 
+                        ls_fit %>% 
+                        summary() %>% 
+                        broom::tidy() %>% 
+                        filter(term == "x") %>% 
+                        pull(p.value)
+                )
+}
+
+```
 
 
+```{r cache = TRUE}
+sim_results <-
+        tibble(beta1 = c(0,1,2,3,4,5,6)) %>% 
+        mutate(
+                output = map( .x = beta1, ~rerun(10000,lm_regression(beta1 = .x ))),
+                output = map(output,bind_rows)
+                ) %>% 
+        unnest(output) %>% 
+        mutate(beta1 = factor(beta1))
+```
+
+## association between effect size and power
+```{r}
+sim_results %>% 
+        filter(beta1 != 0) %>% 
+        mutate(reject = case_when(p_value < 0.05 ~ 1,
+                                  TRUE ~ 0)) %>% 
+        group_by(beta1) %>% 
+        summarise(power = mean(reject)) %>% 
+        ggplot(aes(x = beta1, y = power, color = beta1)) +
+        geom_point() + 
+        labs( x = expression(beta[1]),
+              title = "Fig1: power under different effect size") +
+        theme(legend.position = "none")
+
+```
+
+average estimate of $\hat{\beta_1}$ and true $\beta_1$ in all and only null-rejected sample 
+
+```{r}
+null_rejected_df <- 
+        sim_results %>% 
+        filter(p_value < 0.05) %>% 
+        group_by(beta1) %>% 
+        summarise(mean_beta1_hat = mean(beta1_hat))
+
+sim_results %>% 
+        group_by(beta1) %>% 
+        summarise(mean_beta1_hat = mean(beta1_hat)) %>% 
+        ggplot(aes(x = beta1, y = mean_beta1_hat)) +
+        geom_point(aes( color = "all sample")) +
+        geom_point(aes( color = "null-rejected sample"),alpha = 0.8,data = null_rejected_df) + 
+        labs( x = expression(beta[1]),
+              y = expression(avarage~hat(beta)[1]),
+              title = expression(Fig2: average~hat(beta)[1]~and~true~beta[1]~among~all~and~null-rejected~sample)) 
+        
+```
+
+The sample average of $\hat{\beta_1}$ across tests for which the null is rejected get closer and closer to the true value of  $\beta_1$ with the $\beta_1$(effect size) increases. 
+
+When the effect size is small, the power of test is relatively low and therefore,
+to be rejected, a $\hat{\beta_1}$ need to be further away from null(more extreme) than the avarage $\hat{\beta_1}$ or the true $\beta_1$, which explains why in null-rejected sample, the avarage is higher. And, with the increase of effect size, as we can see in Fig1, the power of test increase also, and we can easily detect the difference. Or in other word, the effect size is large enough itself, so as that $\hat{\beta_1}$ doesn't need to be more extreme to be rejected.
+
+$$
+\beta
+$$
+&#946
