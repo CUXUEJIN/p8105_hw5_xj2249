@@ -2,7 +2,10 @@
 title: "p8105_hw5_xj2249"
 author: "xj2249"
 date: "10/31/2019"
-output: github_document
+output: 
+  github_document:
+        pandoc_args: ["--webtex"]
+
 ---
 
 ```{r setup, include=FALSE}
@@ -131,8 +134,7 @@ sim_results %>%
 
 ```
 
-average estimate of $\hat{\beta_1}$ and true $\beta_1$ in all and only null-rejected sample 
-
+## average estimate of $\hat{\beta_1}$ and true $\beta_1$ in all and only null-rejected sample 
 ```{r}
 null_rejected_df <- 
         sim_results %>% 
@@ -156,8 +158,3 @@ The sample average of $\hat{\beta_1}$ across tests for which the null is rejecte
 
 When the effect size is small, the power of test is relatively low and therefore,
 to be rejected, a $\hat{\beta_1}$ need to be further away from null(more extreme) than the avarage $\hat{\beta_1}$ or the true $\beta_1$, which explains why in null-rejected sample, the avarage is higher. And, with the increase of effect size, as we can see in Fig1, the power of test increase also, and we can easily detect the difference. Or in other word, the effect size is large enough itself, so as that $\hat{\beta_1}$ doesn't need to be more extreme to be rejected.
-
-$$
-\beta
-$$
-&#946
